@@ -1,5 +1,5 @@
 export default new class Nyaa {
-  base = 'http://localhost:3000/api/nyaa?q='
+  base = 'http://127.0.0.1:3000/api/nyaa?q='
 
   async single({ titles, episode }) {
     if (!titles?.length) return []
@@ -14,35 +14,21 @@ export default new class Nyaa {
     if (episode) query += ` ${episode.toString().padStart(2, '0')}`
 
     const res = await fetch(this.base + encodeURIComponent(query))
-    if (!res.ok) return []
+    const data = await res.json()
+    if (!Array.isArray(data)) return []
 
-    const xmlText = await res.text()
-
-    const parser = new DOMParser()
-    const xml = parser.parseFromString(xmlText, "text/xml")
-
-    const items = Array.from(xml.querySelectorAll("item"))
-    if (!items.length) return []
-
-    return items.map(item => {
-      const get = tag =>
-        item.getElementsByTagName(tag)[0]?.textContent || ""
-
-      const magnet = get("link")
-
-      return {
-        title: get("title"),
-        link: magnet,
-        hash: magnet.match(/btih:([A-Fa-f0-9]+)/)?.[1] || '',
-        seeders: Number(get("nyaa:seeders") || 0),
-        leechers: Number(get("nyaa:leechers") || 0),
-        downloads: Number(get("nyaa:downloads") || 0),
-        size: 0,
-        date: new Date(get("pubDate")),
-        accuracy: 'medium',
-        type: 'alt'
-      }
-    })
+    return data.map(item => ({
+      title: item.Name,
+      link: item.Magnet,
+      hash: item.Magnet?.match(/btih:([A-Fa-f0-9]+)/)?.[1] || '',
+      seeders: Number(item.Seeders || 0),
+      leechers: Number(item.Leechers || 0),
+      downloads: Number(item.Downloads || 0),
+      size: 0,
+      date: new Date(item.DateUploaded),
+      accuracy: 'medium',
+      type: 'alt'
+    }))
   }
 
   async test() {
