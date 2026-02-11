@@ -1,5 +1,3 @@
-import { XMLParser } from "fast-xml-parser"
-
 export default new class Nyaa {
   base = 'https://nyaa.si/?page=rss&q='
 
